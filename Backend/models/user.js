@@ -1,64 +1,67 @@
 const mongoose = require("mongoose");
-import crypto from "crypto";
-import { v4 as uuidv4 } from "uuid";
+const crypto = require("crypto");
+const uuidv1 = require("uuid/v1");
 
 const { Schema } = mongoose;
 
 //schema of user
-const userSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 32,
+const userSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 32,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      maxlength: 32,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
+    },
+    userInfo: {
+      type: String,
+      trim: true,
+    },
+    encrypPassword: {
+      type: String,
+      required: true,
+    },
+    salt: String,
+    role: {
+      type: Number,
+      default: 0,
+    },
+    purchases: {
+      type: Array,
+      default: [],
+    },
   },
-  lastName: {
-    type: String,
-    trim: true,
-    maxlength: 32,
-  },
-  email: {
-    type: String,
-    required: true,
-    trim: true,
-    unique: true,
-  },
-  userInfo: {
-    type: String,
-    trim: true,
-  },
-  encrypPassword: {
-    type: String,
-    required: true,
-  },
-  salt: srting,
-  role: {
-    type: Number,
-    default: 0,
-  },
-  purchases: {
-    type: Array,
-    default: [],
-  },
-});
+  { timestamps: true }
+);
 
 //virtual fields
 userSchema
   .virtual("password")
   .set(function (password) {
     this._password = password;
-    this.salt = uuidv4();
-    this.encrypPassword = securePassword(password);
+    this.salt = uuidv1();
+    this.encrypPassword = this.securePassword(password);
   })
   .get(function () {
     return this._password;
   });
 
 //schema method
-userSchema.method = {
+userSchema.methods = {
   //authentication method
-  authenticate: function (plainpassword) {
-    return this.securePassword(plainpassword) === this.encry_password;
+  authenticate: function (plainPassword) {
+    return this.securePassword(plainPassword) === this.encrypPassword;
   },
 
   //create hash of the password
@@ -69,7 +72,7 @@ userSchema.method = {
     try {
       return crypto
         .createHmac("sha256", this.salt)
-        .update("I loVe cupcakes")
+        .update(plainPassword)
         .digest("hex");
     } catch (error) {
       return "";
